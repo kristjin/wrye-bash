@@ -297,9 +297,6 @@ class List(balt.UIList):
                              dndList=dndList, dndColumns=dndColumns)
         self.list = self.gList # self.list must go
         self.checkboxes = colorChecks
-        self.mouseItem = None
-        self.mouseTexts = {}
-        self.mouseTextPrev = u''
         self.vScrollPos = 0
         #--Columns
         self.PopulateColumns()
@@ -308,16 +305,12 @@ class List(balt.UIList):
         self.PopulateItems()
         #--Events: Items
         self.hitIcon = 0
-        wx.EVT_LEFT_DOWN(self.list,self.OnLeftDown)
-        self.list.Bind(wx.EVT_CONTEXT_MENU, self.DoItemMenu)
         #--Events: Columns
         self.list.Bind(wx.EVT_LIST_COL_CLICK, self.DoItemSort)
         self.checkcol = []
         self.list.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColumnResize)
         self.list.Bind(wx.EVT_UPDATE_UI, self.onUpdateUI)
         #--Mouse movement
-        self.list.Bind(wx.EVT_MOTION,self.OnMouse)
-        self.list.Bind(wx.EVT_LEAVE_WINDOW,self.OnMouse)
         self.list.Bind(wx.EVT_SCROLLWIN,self.OnScroll)
 
     #--New way for self.cols, so PopulateColumns will work with
@@ -492,25 +485,6 @@ class List(balt.UIList):
             self.checkcol = []
         event.Skip()
 
-    def OnMouse(self,event):
-        """Check mouse motion to detect right click event."""
-        if event.Moving():
-            (mouseItem,mouseHitFlag) = self.list.HitTest(event.GetPosition())
-            if mouseItem != self.mouseItem:
-                self.mouseItem = mouseItem
-                self.MouseEnteredItem(mouseItem)
-        elif event.Leaving() and self.mouseItem is not None:
-            self.mouseItem = None
-            self.MouseEnteredItem(None)
-        event.Skip()
-
-    def MouseEnteredItem(self,item):
-        """Handle mouse entered item by showing tip or similar."""
-        text = self.mouseTexts.get(item) or ''
-        if text != self.mouseTextPrev:
-            statusBar.SetStatusText(text,1)
-            self.mouseTextPrev = text
-
     #--Column Resize
     def OnColumnResize(self,event):
         """Due to a nastyness that ListCtrl.GetColumnWidth(col) returns
@@ -522,22 +496,6 @@ class List(balt.UIList):
     #--Item Sort
     def DoItemSort(self, event):
         self.PopulateItems(self.cols[event.GetColumn()],-1)
-
-    #--Item Menu
-    def DoItemMenu(self,event):
-        selected = self.GetSelected()
-        if not selected:
-            self.DoColumnMenu(event,0)
-            return
-        #--Show/Destroy Menu
-        self.itemMenu.PopupMenu(self,bashFrame,selected)
-
-    #--Event: Left Down
-    def OnLeftDown(self,event):
-        #self.hitTest = self.list.HitTest((event.GetX(),event.GetY()))
-        #self.pos[0] = event.GetX()
-        #deprint(event.GetX())
-        event.Skip()
 
     def OnScroll(self,event):
         """Event: List was scrolled. Save so can be accessed later."""
@@ -763,7 +721,7 @@ class MasterList(List):
         if not self.edited:
             self.OnLeftDown(event)
         else:
-            List.DoItemMenu(self,event)
+            balt.UIList.DoItemMenu(self, event)
 
     #--Column Resize
     def OnColumnResize(self,event):
@@ -2649,15 +2607,6 @@ class InstallersList(balt.Tank):
         super(InstallersList, self).OnColumnResize(event)
         settings.setChanged('bash.installers.colWidths')
 
-    def MouseOverItem(self,item):
-        """Handle mouse entered item by showing tip or similar."""
-        if item < 0: return
-        item = self.GetItem(item)
-        text = self.mouseTexts.get(item) or u''
-        if text != self.mouseTextPrev:
-            statusBar.SetStatusText(text,1)
-            self.mouseTextPrev = text
-
     def OnBeginEditLabel(self,event):
         """Start renaming installers"""
         #--Only rename multiple items of the same type
@@ -4287,6 +4236,10 @@ class PeopleList(balt.Tank):
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.people.cols'].index(column)
+
+    def MouseOverItem(self, item):
+        """Handle mouse over item by showing tip or similar."""
+        pass
 
 #------------------------------------------------------------------------------
 class PeoplePanel(SashTankPanel):
