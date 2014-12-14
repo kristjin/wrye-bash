@@ -306,12 +306,8 @@ class List(balt.UIList):
         #--Events: Items
         self.hitIcon = 0
         #--Events: Columns
-        self.list.Bind(wx.EVT_LIST_COL_CLICK, self.DoItemSort)
         self.checkcol = []
-        self.list.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColumnResize)
         self.list.Bind(wx.EVT_UPDATE_UI, self.onUpdateUI)
-        #--Mouse movement
-        self.list.Bind(wx.EVT_SCROLLWIN,self.OnScroll)
 
     #--New way for self.cols, so PopulateColumns will work with
     #  the optional columns menu
@@ -491,10 +487,12 @@ class List(balt.UIList):
         the old size before this event completes just save what
         column is being edited and process after in OnUpdateUI()"""
         self.checkcol = [event.GetColumn()]
+        settings.setChanged(self.colWidthsKey)
         event.Skip()
 
     #--Item Sort
-    def DoItemSort(self, event):
+    def OnColumnClick(self, event):
+        """List OnColumnClick override - cf Tank."""
         self.PopulateItems(self.cols[event.GetColumn()],-1)
 
     def OnScroll(self,event):
@@ -507,12 +505,12 @@ class List(balt.UIList):
 class MasterList(List):
     mainMenu = Links()
     itemMenu = Links()
+    keyPrefix = 'bash.masters'
 
     def __init__(self,parent,fileInfo,setEditedFn):
         #--Columns
         self.cols = settings['bash.masters.cols']
         self.colNames = settings['bash.colNames']
-        self.colWidths = settings['bash.masters.colWidths']
         self.colAligns = settings['bash.masters.colAligns']
         self.colReverse = settings['bash.masters.colReverse'].copy()
         #--Data/Items
@@ -709,8 +707,9 @@ class MasterList(List):
         self._setEditedFn()
 
     #--Item Sort
-    def DoItemSort(self, event):
-        pass #--Don't do column head sort.
+    def OnColumnClick(self, event):
+        """MasterList: Don't do column head sort."""
+        event.Skip()
 
     #--Column Menu
     def DoColumnMenu(self, event, column=None):
@@ -722,11 +721,6 @@ class MasterList(List):
             self.OnLeftDown(event)
         else:
             balt.UIList.DoItemMenu(self, event)
-
-    #--Column Resize
-    def OnColumnResize(self,event):
-        super(MasterList,self).OnColumnResize(event)
-        settings.setChanged('bash.masters.colWidths')
 
     #--Event: Left Down
     def OnLeftDown(self,event):
@@ -767,6 +761,7 @@ class MasterList(List):
 class INIList(List):
     mainMenu = Links()  #--Column menu
     itemMenu = Links()  #--Single item menu
+    keyPrefix = 'bash.ini'
 
     def __init__(self,parent):
         #--Columns
@@ -774,7 +769,6 @@ class INIList(List):
         self.colAligns = settings['bash.ini.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.ini.colReverse')
-        self.colWidths = settings['bash.ini.colWidths']
         self.sortValid = settings['bash.ini.sortValid']
         #--Data/Items
         self.data = bosh.iniInfos
@@ -946,11 +940,6 @@ class INIList(List):
                 self.DeleteSelected(True,event.ShiftDown())
         event.Skip()
 
-    def OnColumnResize(self,event):
-        """Column resize: Stored modified column widths."""
-        super(INIList,self).OnColumnResize(event)
-        settings.setChanged('bash.ini.colWidths')
-
     def OnItemSelected(self, event): event.Skip()
 
 #------------------------------------------------------------------------------
@@ -1064,6 +1053,7 @@ class ModList(List):
     #--Class Data
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
+    keyPrefix = 'bash.mods'
 
     def __init__(self,parent):
         #--Columns
@@ -1071,7 +1061,6 @@ class ModList(List):
         self.colAligns = settings['bash.mods.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.mods.colReverse')
-        self.colWidths = settings['bash.mods.colWidths']
         #--Data/Items
         self.data = data = bosh.modInfos
         self.details = None #--Set by panel
@@ -1090,7 +1079,6 @@ class ModList(List):
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
-        self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         #--ScrollPos
         self.list.ScrollLines(settings.get('bash.mods.scrollPos',0))
@@ -1327,8 +1315,8 @@ class ModList(List):
         except: pass
 
     #--Events ---------------------------------------------
-    def OnDoubleClick(self,event):
-        """Handle doubclick event."""
+    def OnDClick(self,event):
+        """Handle doubleclicking a mod in the Mods List."""
         (hitItem,hitFlag) = self.list.HitTest(event.GetPosition())
         if hitItem < 0: return
         fileInfo = self.data[self.items[hitItem]]
@@ -1386,11 +1374,6 @@ class ModList(List):
                       self.GetSelected())
             copyListToClipboard(sel)
         event.Skip()
-
-    def OnColumnResize(self,event):
-        """Column resize: Stored modified column widths."""
-        super(ModList,self).OnColumnResize(event)
-        settings.setChanged('bash.mods.colWidths')
 
     def OnLeftDown(self,event):
         """Left Down: Check/uncheck mods."""
@@ -2126,6 +2109,7 @@ class SaveList(List):
     #--Class Data
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
+    keyPrefix = 'bash.saves'
 
     def __init__(self,parent):
         #--Columns
@@ -2133,7 +2117,6 @@ class SaveList(List):
         self.colAligns = settings['bash.saves.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.saves.colReverse')
-        self.colWidths = settings['bash.saves.colWidths']
         #--Data/Items
         self.data = data = bosh.saveInfos
         self.details = None #--Set by panel
@@ -2281,11 +2264,6 @@ class SaveList(List):
                 if index != -1:
                     self.list.EditLabel(index)
         event.Skip()
-
-    #--Column Resize
-    def OnColumnResize(self,event):
-        super(SaveList,self).OnColumnResize(event)
-        settings.setChanged('bash.saves.colWidths')
 
     def OnKeyUp(self,event):
         """Char event: select all items"""
@@ -2572,13 +2550,13 @@ class SavePanel(SashPanel):
 
 #------------------------------------------------------------------------------
 class InstallersList(balt.Tank):
+    keyPrefix = 'bash.installers'
 
     def __init__(self,parent,data,icons=None,mainMenu=None,itemMenu=None,
             details=None,style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
         self.colNames = settings['bash.colNames']
         self.colAligns = settings['bash.installers.colAligns']
         self.colReverse = settings['bash.installers.colReverse']
-        self.colWidths = settings['bash.installers.colWidths']
         self.sort = settings['bash.installers.sort']
         balt.Tank.__init__(self,parent,data,icons,mainMenu,itemMenu,
             details,style|wx.LC_EDIT_LABELS,dndList=True,dndFiles=True,dndColumns=['Order'])
@@ -2601,11 +2579,6 @@ class InstallersList(balt.Tank):
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.installers.cols'].index(column)
-
-    def OnColumnResize(self,event):
-        """Column has been resized."""
-        super(InstallersList, self).OnColumnResize(event)
-        settings.setChanged('bash.installers.colWidths')
 
     def OnBeginEditLabel(self,event):
         """Start renaming installers"""
@@ -3493,6 +3466,7 @@ class ScreensList(List):
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
     _sizeHints = (100, 100)
+    keyPrefix = 'bash.screens'
 
     def __init__(self,parent):
         #--Columns
@@ -3500,7 +3474,6 @@ class ScreensList(List):
         self.colAligns = settings['bash.screens.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.screens.colReverse')
-        self.colWidths = settings['bash.screens.colWidths']
         #--Data/Items
         self.data = bosh.screensData = bosh.ScreensData()
         self.sort = settings['bash.screens.sort']
@@ -3514,10 +3487,9 @@ class ScreensList(List):
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.list.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEditLabel)
         self.list.Bind(wx.EVT_LIST_END_LABEL_EDIT, self.OnEditLabel)
-        self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
 
-    def OnDoubleClick(self,event):
-        """Double click a screeshot"""
+    def OnDClick(self,event):
+        """Double click a screenshot"""
         (hitItem,hitFlag) = self.list.HitTest(event.GetPosition())
         if hitItem < 0: return
         item = self.items[hitItem]
@@ -3664,11 +3636,6 @@ class ScreensList(List):
             copyListToClipboard(sel)
         event.Skip()
 
-    #--Column Resize
-    def OnColumnResize(self,event):
-        super(ScreensList,self).OnColumnResize(event)
-        settings.setChanged('bash.screens.colWidths')
-
     def OnItemSelected(self,event=None):
         fileName = self.items[event.m_itemIndex]
         filePath = bosh.screensData.dir.join(fileName)
@@ -3713,6 +3680,7 @@ class BSAList(List):
     #--Class Data
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
+    keyPrefix = 'bash.BSAs'
 
     def __init__(self,parent):
         #--Columns
@@ -3720,7 +3688,6 @@ class BSAList(List):
         self.colAligns = settings['bash.BSAs.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.BSAs.colReverse')
-        self.colWidths = settings['bash.BSAs.colWidths']
         #--Data/Items
         self.data = data = bosh.BSAInfos
         self.details = None #--Set by panel
@@ -3810,11 +3777,6 @@ class BSAList(List):
         if event.GetKeyCode() in (wx.WXK_DELETE,wx.WXK_NUMPAD_DELETE):
             self.DeleteSelected()
         event.Skip()
-
-    #--Column Resize
-    def OnColumnResize(self,event):
-        super(BSAList,self).OnColumnResize(event)
-        settings.setChanged('bash.BSAs.colWidths')
 
     #--Event: Left Down
     def OnLeftDown(self,event):
@@ -4014,6 +3976,7 @@ class MessageList(List):
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
     _sizeHints = (100, 100)
+    keyPrefix = 'bash.messages'
 
     def __init__(self,parent):
         #--Columns
@@ -4021,7 +3984,6 @@ class MessageList(List):
         self.colAligns = settings['bash.messages.colAligns']
         self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.messages.colReverse')
-        self.colWidths = settings['bash.messages.colWidths']
         #--Data/Items
         self.data = bosh.messages = bosh.Messages()
         self.data.refresh()
@@ -4115,11 +4077,6 @@ class MessageList(List):
             self.SelectAll()
         event.Skip()
 
-    #--Column Resize
-    def OnColumnResize(self,event):
-        super(MessageList,self).OnColumnResize(event)
-        settings.setChanged('bash.messages.colWidths')
-
     def OnItemSelected(self,event=None):
         keys = self.GetSelected()
         path = bosh.dirs['saveBase'].join(u'Messages.html')
@@ -4210,11 +4167,11 @@ class MessagePanel(SashPanel):
 
 #------------------------------------------------------------------------------
 class PeopleList(balt.Tank):
+    keyPrefix = 'bash.people'
 
     def __init__(self,*args,**kwdargs):
         self.colNames = settings['bash.colNames']
         self.colAligns = settings['bash.people.colAligns']
-        self.colWidths = settings['bash.people.colWidths']
         self.colReverse = settings['bash.people.colReverse']
         self.sort = settings['bash.people.sort']
         balt.Tank.__init__(self, *args, **kwdargs)
@@ -4228,11 +4185,6 @@ class PeopleList(balt.Tank):
     def SetColumnReverse(self,column,reverse):
         settings['bash.people.colReverse'][column] = reverse
         settings.setChanged('bash.people.colReverse')
-
-    def OnColumnResize(self,event):
-        """Column resized."""
-        super(PeopleList,self).OnColumnResize(event)
-        settings.setChanged('bash.people.colWidths')
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.people.cols'].index(column)

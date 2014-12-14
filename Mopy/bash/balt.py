@@ -1700,14 +1700,20 @@ class ListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 class UIList(wx.Panel):
     """Tmp class to factor out common code in basher.List and balt.Tank."""
     _sizeHints = (100, 100) # min ListCtrl size TODO(ut): random overrides
+    # UI settings keys
+    keyPrefix = 'OVERRIDE'
 
     def __init__(self, parent, style, dndFiles, dndList, dndColumns=()):
         wx.Panel.__init__(self, parent, style=wx.WANTS_CHARS)
-        self.dndColumns = dndColumns
         #--Layout
         sizer = vSizer()
         self.SetSizer(sizer)
         self.SetSizeHints(*self.__class__._sizeHints)
+        #--settings keys
+        self.colWidthsKey = self.__class__.keyPrefix + '.colWidths'
+        self.colWidths = bosh.settings[self.colWidthsKey]
+        #--attributes
+        self.dndColumns = dndColumns
         #--gList
         self.gList = ListCtrl(self, style=style, dndFiles=dndFiles,
                               dndList=dndList, fnDndAllow=self.dndAllow,
@@ -1716,11 +1722,17 @@ class UIList(wx.Panel):
         # gList callbacks
         self.gList.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.DoColumnMenu)
         self.gList.Bind(wx.EVT_CONTEXT_MENU, self.DoItemMenu)
+        self.gList.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumnClick)
+        #--Events: Columns
+        self.gList.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColumnResize)
+        #--Events: Items
+        self.gList.Bind(wx.EVT_LEFT_DCLICK, self.OnDClick)
         self.gList.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
         self.gList.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         #--Mouse movement
         self.gList.Bind(wx.EVT_MOTION, self.OnMouse)
         self.gList.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouse)
+        self.gList.Bind(wx.EVT_SCROLLWIN, self.OnScroll)
         self.mouseItem = None
         self.mouseTexts = {}
         self.mouseTextPrev = u''
@@ -1780,9 +1792,17 @@ class UIList(wx.Panel):
             Link.Frame.GetStatusBar().SetStatusText(text, 1)
             self.mouseTextPrev = text
 
-    def GetItem(self, item): return item # List version TODO(ut): ugly
+    def GetItem(self, item): return item # List version TODO(ut): ugly, see above
 
+    def OnDClick(self,event):
+        """Left mouse double click."""
+        event.Skip()
+
+    #--ABSTRACT - TODO(ut): different Tank and List overrides
     def OnItemSelected(self, event): raise AbstractError
+    def OnColumnClick(self, event): raise AbstractError
+    def OnScroll(self, event): raise AbstractError
+    def OnColumnResize(self, event): raise AbstractError
 
     #-- Item selection --------------------------------------------------------
     def SelectItemAtIndex(self, index, select=True,
@@ -1842,13 +1862,6 @@ class Tank(UIList):
         #--Items
         self.sortDirty = False
         self.UpdateItems()
-        #--Events: Items
-        gList.Bind(wx.EVT_LEFT_DCLICK, self.OnDClick)
-        #--Events: Columns
-        gList.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumnClick)
-        gList.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColumnResize)
-        #--Mouse movement
-        gList.Bind(wx.EVT_SCROLLWIN, self.OnScroll)
         #--ScrollPos
         gList.ScrollLines(data.getParam('vScrollPos',0))
         data.setParam('vScrollPos', gList.GetScrollPos(wx.VERTICAL))
@@ -2087,10 +2100,7 @@ class Tank(UIList):
         else:
             event.Skip()
         self.colWidths[colName] = width
-
-    def OnDClick(self,event):
-        """Left mouse double click."""
-        event.Skip()
+        bosh.settings.setChanged(self.colWidthsKey) # TODO(ut): needed ? was being called by People and Installers overrides
 
     def OnColumnClick(self, event):
         """Column header was left clicked on. Sort on that column."""
