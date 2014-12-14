@@ -1712,9 +1712,10 @@ class UIList(wx.Panel):
         sizer = vSizer()
         self.SetSizer(sizer)
         self.SetSizeHints(*self.__class__._sizeHints)
-        #--settings keys
+        #--Columns
         self.colNames = bosh.settings['bash.colNames']
         self.colAligns = bosh.settings[self.__class__.keyPrefix + '.colAligns']
+        self.sort = bosh.settings[self.__class__.keyPrefix + '.sort']
         self.colWidthsKey = self.__class__.keyPrefix + '.colWidths'
         self.colWidths = bosh.settings[self.colWidthsKey]
         #--attributes
@@ -1838,7 +1839,6 @@ class Tank(UIList):
     """'Tank' format table. Takes the form of a wxListCtrl in Report mode, with
     multiple columns and (optionally) column and item menus."""
 
-    #--Instance ---------------------------------------------------------------
     def __init__(self, parent, data, icons=None,
                  details=None, style=(wx.LC_REPORT | wx.LC_SINGLE_SEL),
                  dndList=False, dndFiles=False, dndColumns=()):

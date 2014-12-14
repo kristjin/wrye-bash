@@ -519,7 +519,6 @@ class MasterList(List):
         self.items = [] #--Item numbers in display order.
         self.fileOrderItems = []
         self.loadOrderNames = []
-        self.sort = settings['bash.masters.sort']
         self.esmsFirst = settings['bash.masters.esmsFirst']
         self.selectedFirst = settings['bash.masters.selectedFirst']
         #--Parent init
@@ -765,7 +764,6 @@ class INIList(List):
         self.sortValid = settings['bash.ini.sortValid']
         #--Data/Items
         self.data = bosh.iniInfos
-        self.sort = settings['bash.ini.sort']
         #--Parent init
         List.__init__(self,parent,ctrlStyle=wx.LC_REPORT)
         #--Events
@@ -773,7 +771,6 @@ class INIList(List):
         #--Image List
         checkboxesIL = colorChecks.GetImageList()
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
-        #--ScrollPos
 
     def CountTweakStatus(self):
         """Returns number of each type of tweak, in the
@@ -1052,7 +1049,6 @@ class ModList(List):
         #--Data/Items
         self.data = data = bosh.modInfos
         self.details = None #--Set by panel
-        self.sort = settings['bash.mods.sort']
         self.esmsFirst = settings['bash.mods.esmsFirst']
         self.selectedFirst = settings['bash.mods.selectedFirst']
         #--Parent init
@@ -2103,7 +2099,6 @@ class SaveList(List):
         #--Data/Items
         self.data = data = bosh.saveInfos
         self.details = None #--Set by panel
-        self.sort = settings['bash.saves.sort']
         #--Parent init
         List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
         #--Image List
@@ -2537,7 +2532,6 @@ class InstallersList(balt.Tank):
     def __init__(self, parent, data, icons=None, details=None,
                  style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
         self.colReverse = settings['bash.installers.colReverse']
-        self.sort = settings['bash.installers.sort']
         balt.Tank.__init__(self,parent,data,icons,
             details,style|wx.LC_EDIT_LABELS,dndList=True,dndFiles=True,dndColumns=['Order'])
         self.gList.Bind(wx.EVT_CHAR, self.OnChar)
@@ -3451,7 +3445,6 @@ class ScreensList(List):
         self.colReverse = settings.getChanged('bash.screens.colReverse')
         #--Data/Items
         self.data = bosh.screensData = bosh.ScreensData()
-        self.sort = settings['bash.screens.sort']
         #--Parent init
         List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
         #--Events
@@ -3661,7 +3654,6 @@ class BSAList(List):
         #--Data/Items
         self.data = data = bosh.BSAInfos
         self.details = None #--Set by panel
-        self.sort = settings['bash.BSAs.sort']
         #--Parent init
         List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
         #--Image List
@@ -3952,7 +3944,6 @@ class MessageList(List):
         #--Data/Items
         self.data = bosh.messages = bosh.Messages()
         self.data.refresh()
-        self.sort = settings['bash.messages.sort']
         #--Other
         self.gText = None
         self.searchResults = None
@@ -4135,7 +4126,6 @@ class PeopleList(balt.Tank):
 
     def __init__(self,*args,**kwdargs):
         self.colReverse = settings['bash.people.colReverse']
-        self.sort = settings['bash.people.sort']
         balt.Tank.__init__(self, *args, **kwdargs)
 
     @property
