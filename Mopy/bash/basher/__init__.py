@@ -69,7 +69,7 @@ from ..balt import bitmapButton, button, toggleButton, checkBox, staticText, \
     spinCtrl, textCtrl
 from ..balt import spacer, hSizer, vSizer
 from ..balt import colors, images, Image
-from ..balt import Links, ListCtrl, ItemLink
+from ..balt import Links, ItemLink
 from ..balt import wxListAligns, splitterStyle
 
 # Constants --------------------------------------------------------------------
@@ -287,21 +287,15 @@ class SashTankPanel(SashPanel):
         super(SashTankPanel,self).OnShow()
 
 #------------------------------------------------------------------------------
-class List(wx.Panel):
-    def __init__(self,parent,id=wx.ID_ANY,ctrlStyle=wx.LC_REPORT|wx.LC_SINGLE_SEL,
-                 dndFiles=False,dndList=False,dndColumns=[]):
-        wx.Panel.__init__(self,parent,id, style=wx.WANTS_CHARS)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizer)
-        self.SetSizeHints(-1,50)
-        self.dndColumns = dndColumns
+class List(balt.UIList):
+    _sizeHints = (-1, 50) # overrides UIList
+
+    def __init__(self, parent, ctrlStyle=wx.LC_REPORT | wx.LC_SINGLE_SEL,
+                 dndFiles=False, dndList=False, dndColumns=()):
         #--ListCtrl
-        listId = self.listId = wx.NewId()
-        self.list = ListCtrl(self, listId, style=ctrlStyle,
-                             dndFiles=dndFiles, dndList=dndList,
-                             fnDndAllow=self.dndAllow,
-                             fnDropFiles=self.OnDropFiles,
-                             fnDropIndexes=self.OnDropIndexes)
+        balt.UIList.__init__(self, parent, style=ctrlStyle, dndFiles=dndFiles,
+                             dndList=dndList, dndColumns=dndColumns)
+        self.list = self.gList # self.list must go
         self.checkboxes = colorChecks
         self.mouseItem = None
         self.mouseTexts = {}
@@ -312,18 +306,15 @@ class List(wx.Panel):
         #--Items
         self.sortDirty = 0
         self.PopulateItems()
-        #--Events
-        wx.EVT_SIZE(self, self.OnSize)
         #--Events: Items
         self.hitIcon = 0
         wx.EVT_LEFT_DOWN(self.list,self.OnLeftDown)
         self.list.Bind(wx.EVT_CONTEXT_MENU, self.DoItemMenu)
         #--Events: Columns
-        wx.EVT_LIST_COL_CLICK(self, listId, self.DoItemSort)
-        wx.EVT_LIST_COL_RIGHT_CLICK(self, listId, self.DoColumnMenu)
+        self.list.Bind(wx.EVT_LIST_COL_CLICK, self.DoItemSort)
         self.checkcol = []
-        wx.EVT_LIST_COL_END_DRAG(self,listId, self.OnColumnResize)
-        wx.EVT_UPDATE_UI(self, listId, self.onUpdateUI)
+        self.list.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColumnResize)
+        self.list.Bind(wx.EVT_UPDATE_UI, self.onUpdateUI)
         #--Mouse movement
         self.list.Bind(wx.EVT_MOTION,self.OnMouse)
         self.list.Bind(wx.EVT_LEAVE_WINDOW,self.OnMouse)
@@ -341,13 +332,6 @@ class List(wx.Panel):
             del self.colsKey
         self._cols = value
     cols = property(_getCols,_setCols)
-
-    #--Drag and Drop---------------------------------------
-    def dndAllow(self):
-        col = self.sort
-        return col in self.dndColumns
-    def OnDropFiles(self, x, y, filenames): raise AbstractError
-    def OnDropIndexes(self, indexes, newPos): raise AbstractError
 
     #--Items ----------------------------------------------
     #--Populate Columns
@@ -413,18 +397,6 @@ class List(wx.Panel):
         #--Delete items?
         while self.list.GetItemCount() > len(self.items):
             self.list.DeleteItem(self.list.GetItemCount()-1)
-
-    def SelectItemAtIndex(self, index, select=True,
-                          _select=wx.LIST_STATE_SELECTED):
-        self.list.SetItemState(index, select * _select, _select)
-
-    def ClearSelected(self):
-        for itemDex in xrange(self.list.GetItemCount()):
-            self.SelectItemAtIndex(itemDex, False)
-
-    def SelectAll(self):
-        for itemDex in range(self.list.GetItemCount()):
-            self.SelectItemAtIndex(itemDex)
 
     def GetSelected(self):
         """Return list of items selected (hilighted) in the interface."""
@@ -539,14 +511,6 @@ class List(wx.Panel):
             statusBar.SetStatusText(text,1)
             self.mouseTextPrev = text
 
-    #--Column Menu
-    def DoColumnMenu(self,event,column = None):
-        if not self.mainMenu: return
-        #--Build Menu
-        if column is None: column = event.GetColumn()
-        #--Show/Destroy Menu
-        self.mainMenu.PopupMenu(self,bashFrame,column)
-
     #--Column Resize
     def OnColumnResize(self,event):
         """Due to a nastyness that ListCtrl.GetColumnWidth(col) returns
@@ -567,12 +531,6 @@ class List(wx.Panel):
             return
         #--Show/Destroy Menu
         self.itemMenu.PopupMenu(self,bashFrame,selected)
-
-    #--Size Change
-    def OnSize(self, event):
-        size = self.GetClientSizeTuple()
-        #print self,size
-        self.list.SetSize(size)
 
     #--Event: Left Down
     def OnLeftDown(self,event):
@@ -614,12 +572,14 @@ class MasterList(List):
         self.mainMenu = MasterList.mainMenu
         self.itemMenu = MasterList.itemMenu
         #--Parent init
-        List.__init__(self,parent,wx.ID_ANY,ctrlStyle=(wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_EDIT_LABELS))
-        wx.EVT_LIST_END_LABEL_EDIT(self,self.listId,self.OnLabelEdited)
+        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_EDIT_LABELS))
+        self.gList.Bind(wx.EVT_LIST_END_LABEL_EDIT,self.OnLabelEdited)
         #--Image List
         checkboxesIL = self.checkboxes.GetImageList()
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
         self._setEditedFn = setEditedFn
+
+    def OnItemSelected(self, event): event.Skip()
 
     #--NewItemNum
     def newId(self):
@@ -795,9 +755,8 @@ class MasterList(List):
         pass #--Don't do column head sort.
 
     #--Column Menu
-    def DoColumnMenu(self,event,column=None):
-        if not self.fileInfo: return
-        List.DoColumnMenu(self,event,column)
+    def DoColumnMenu(self, event, column=None):
+        if self.fileInfo: balt.UIList.DoColumnMenu(self, event, column)
 
     #--Item Menu
     def DoItemMenu(self,event):
@@ -866,7 +825,7 @@ class INIList(List):
         self.mainMenu = INIList.mainMenu
         self.itemMenu = INIList.itemMenu
         #--Parent init
-        List.__init__(self,parent,wx.ID_ANY,ctrlStyle=wx.LC_REPORT)
+        List.__init__(self,parent,ctrlStyle=wx.LC_REPORT)
         #--Events
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         #--Image List
@@ -1034,6 +993,8 @@ class INIList(List):
         super(INIList,self).OnColumnResize(event)
         settings.setChanged('bash.ini.colWidths')
 
+    def OnItemSelected(self, event): event.Skip()
+
 #------------------------------------------------------------------------------
 class INITweakLineCtrl(wx.ListCtrl):
     def __init__(self, parent, iniContents, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_NO_HEADER):
@@ -1163,14 +1124,13 @@ class ModList(List):
         self.mainMenu = ModList.mainMenu
         self.itemMenu = ModList.itemMenu
         #--Parent init
-        List.__init__(self,parent,wx.ID_ANY,ctrlStyle=wx.LC_REPORT, dndList=True, dndColumns=['Load Order'])#|wx.SUNKEN_BORDER))
+        List.__init__(self,parent,ctrlStyle=wx.LC_REPORT, dndList=True, dndColumns=['Load Order'])#|wx.SUNKEN_BORDER))
         #--Image List
         checkboxesIL = colorChecks.GetImageList()
         self.sm_up = checkboxesIL.Add(balt.SmallUpArrow.GetBitmap())
         self.sm_dn = checkboxesIL.Add(balt.SmallDnArrow.GetBitmap())
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
         #--Events
-        wx.EVT_LIST_ITEM_SELECTED(self,self.listId,self.OnItemSelected)
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -2224,13 +2184,12 @@ class SaveList(List):
         self.mainMenu = SaveList.mainMenu
         self.itemMenu = SaveList.itemMenu
         #--Parent init
-        List.__init__(self,parent,-1,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
+        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
         #--Image List
         checkboxesIL = self.checkboxes.GetImageList()
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
-        wx.EVT_LIST_ITEM_SELECTED(self,self.listId,self.OnItemSelected)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.list.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEditLabel)
         self.list.Bind(wx.EVT_LIST_END_LABEL_EDIT, self.OnEditLabel)
@@ -2655,15 +2614,16 @@ class SavePanel(SashPanel):
 
 #------------------------------------------------------------------------------
 class InstallersList(balt.Tank):
+
     def __init__(self,parent,data,icons=None,mainMenu=None,itemMenu=None,
-            details=None,id=-1,style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
+            details=None,style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
         self.colNames = settings['bash.colNames']
         self.colAligns = settings['bash.installers.colAligns']
         self.colReverse = settings['bash.installers.colReverse']
         self.colWidths = settings['bash.installers.colWidths']
         self.sort = settings['bash.installers.sort']
         balt.Tank.__init__(self,parent,data,icons,mainMenu,itemMenu,
-            details,id,style|wx.LC_EDIT_LABELS,dndList=True,dndFiles=True,dndColumns=['Order'])
+            details,style|wx.LC_EDIT_LABELS,dndList=True,dndFiles=True,dndColumns=['Order'])
         self.gList.Bind(wx.EVT_CHAR, self.OnChar)
         self.gList.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.gList.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEditLabel)
@@ -2940,10 +2900,6 @@ class InstallersList(balt.Tank):
         gInstallers.frameActivated = True
         gInstallers.OnShow()
 
-    def SelectAll(self):
-        for itemDex in range(self.gList.GetItemCount()):
-            self.SelectItemAtIndex(itemDex)
-
     def DeleteSelected(self, shellUI=False, noRecycle=False, _refresh=False):
         super(InstallersList, self).DeleteSelected(shellUI, noRecycle, _refresh)
         with balt.BusyCursor():
@@ -3079,7 +3035,6 @@ class InstallersPanel(SashTankPanel):
             installercons, InstallersPanel.mainMenu, InstallersPanel.itemMenu,
             details=self, style=wx.LC_REPORT)
         bosh.installersWindow = self.gList
-        self.gList.SetSizeHints(100,100)
         #--Package
         self.gPackage = roTextCtrl(right, noborder=True)
         self.gPackage.HideNativeCaret()
@@ -3588,6 +3543,7 @@ class ScreensList(List):
     #--Class Data
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
+    _sizeHints = (100, 100)
 
     def __init__(self,parent):
         #--Columns
@@ -3603,9 +3559,8 @@ class ScreensList(List):
         self.mainMenu = ScreensList.mainMenu
         self.itemMenu = ScreensList.itemMenu
         #--Parent init
-        List.__init__(self,parent,-1,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
+        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
         #--Events
-        wx.EVT_LIST_ITEM_SELECTED(self,self.listId,self.OnItemSelected)
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.list.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEditLabel)
@@ -3782,7 +3737,6 @@ class ScreensPanel(SashPanel):
         #--Contents
         global screensList
         screensList = ScreensList(left)
-        screensList.SetSizeHints(100,100)
         screensList.picture = balt.Picture(right,256,192,background=colors['screens.bkgd.image'])
         self.list = screensList
         #--Layout
@@ -3826,13 +3780,12 @@ class BSAList(List):
         self.mainMenu = BSAList.mainMenu
         self.itemMenu = BSAList.itemMenu
         #--Parent init
-        List.__init__(self,parent,-1,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
+        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
         #--Image List
         checkboxesIL = self.checkboxes.GetImageList()
         self.list.SetImageList(checkboxesIL,wx.IMAGE_LIST_SMALL)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
-        wx.EVT_LIST_ITEM_SELECTED(self,self.listId,self.OnItemSelected)
         #--ScrollPos
         self.list.ScrollLines(settings.get('bash.BSAs.scrollPos',0))
         self.vScrollPos = self.list.GetScrollPos(wx.VERTICAL)
@@ -4111,6 +4064,7 @@ class MessageList(List):
     #--Class Data
     mainMenu = Links() #--Column menu
     itemMenu = Links() #--Single item menu
+    _sizeHints = (100, 100)
 
     def __init__(self,parent):
         #--Columns
@@ -4130,9 +4084,8 @@ class MessageList(List):
         self.gText = None
         self.searchResults = None
         #--Parent init
-        List.__init__(self,parent,wx.ID_ANY,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
+        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
         #--Events
-        wx.EVT_LIST_ITEM_SELECTED(self,self.listId,self.OnItemSelected)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
     def GetItems(self):
@@ -4237,7 +4190,6 @@ class MessagePanel(SashPanel):
         #--Contents
         global gMessageList
         gMessageList = MessageList(gTop)
-        gMessageList.SetSizeHints(100,100)
         gMessageList.gText = wx.lib.iewin.IEHtmlWindow(gBottom,wx.ID_ANY,style=wx.NO_FULL_REPAINT_ON_RESIZE)
         self.list = gMessageList
         #--Search # TODO(ut): move to textCtrl subclass
@@ -4309,6 +4261,7 @@ class MessagePanel(SashPanel):
 
 #------------------------------------------------------------------------------
 class PeopleList(balt.Tank):
+
     def __init__(self,*args,**kwdargs):
         self.colNames = settings['bash.colNames']
         self.colAligns = settings['bash.people.colAligns']
@@ -4352,7 +4305,6 @@ class PeoplePanel(SashTankPanel):
         self.gList = PeopleList(left,data,
             karmacons, PeoplePanel.mainMenu, PeoplePanel.itemMenu,
             details=self, style=wx.LC_REPORT)
-        self.gList.SetSizeHints(100,100)
         self.gName = roTextCtrl(right, multiline=False)
         self.gText = textCtrl(right, multiline=True)
         self.gKarma = spinCtrl(right,u'0',min=-5,max=5,onSpin=self.OnSpin)
