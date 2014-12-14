@@ -510,8 +510,6 @@ class MasterList(List):
     def __init__(self,parent,fileInfo,setEditedFn):
         #--Columns
         self.cols = settings['bash.masters.cols']
-        self.colNames = settings['bash.colNames']
-        self.colAligns = settings['bash.masters.colAligns']
         self.colReverse = settings['bash.masters.colReverse'].copy()
         #--Data/Items
         self.edited = False
@@ -766,8 +764,6 @@ class INIList(List):
     def __init__(self,parent):
         #--Columns
         self.colsKey = 'bash.ini.cols'
-        self.colAligns = settings['bash.ini.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.ini.colReverse')
         self.sortValid = settings['bash.ini.sortValid']
         #--Data/Items
@@ -1058,8 +1054,6 @@ class ModList(List):
     def __init__(self,parent):
         #--Columns
         self.colsKey = 'bash.mods.cols'
-        self.colAligns = settings['bash.mods.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.mods.colReverse')
         #--Data/Items
         self.data = data = bosh.modInfos
@@ -2114,8 +2108,6 @@ class SaveList(List):
     def __init__(self,parent):
         #--Columns
         self.colsKey = 'bash.saves.cols'
-        self.colAligns = settings['bash.saves.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.saves.colReverse')
         #--Data/Items
         self.data = data = bosh.saveInfos
@@ -2554,8 +2546,6 @@ class InstallersList(balt.Tank):
 
     def __init__(self,parent,data,icons=None,mainMenu=None,itemMenu=None,
             details=None,style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
-        self.colNames = settings['bash.colNames']
-        self.colAligns = settings['bash.installers.colAligns']
         self.colReverse = settings['bash.installers.colReverse']
         self.sort = settings['bash.installers.sort']
         balt.Tank.__init__(self,parent,data,icons,mainMenu,itemMenu,
@@ -3471,8 +3461,6 @@ class ScreensList(List):
     def __init__(self,parent):
         #--Columns
         self.colsKey = 'bash.screens.cols'
-        self.colAligns = settings['bash.screens.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.screens.colReverse')
         #--Data/Items
         self.data = bosh.screensData = bosh.ScreensData()
@@ -3685,8 +3673,6 @@ class BSAList(List):
     def __init__(self,parent):
         #--Columns
         self.cols = settings['bash.BSAs.cols']
-        self.colAligns = settings['bash.BSAs.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.BSAs.colReverse')
         #--Data/Items
         self.data = data = bosh.BSAInfos
@@ -3981,8 +3967,6 @@ class MessageList(List):
     def __init__(self,parent):
         #--Columns
         self.colsKey = 'bash.messages.cols'
-        self.colAligns = settings['bash.messages.colAligns']
-        self.colNames = settings['bash.colNames']
         self.colReverse = settings.getChanged('bash.messages.colReverse')
         #--Data/Items
         self.data = bosh.messages = bosh.Messages()
@@ -4170,8 +4154,6 @@ class PeopleList(balt.Tank):
     keyPrefix = 'bash.people'
 
     def __init__(self,*args,**kwdargs):
-        self.colNames = settings['bash.colNames']
-        self.colAligns = settings['bash.people.colAligns']
         self.colReverse = settings['bash.people.colReverse']
         self.sort = settings['bash.people.sort']
         balt.Tank.__init__(self, *args, **kwdargs)
