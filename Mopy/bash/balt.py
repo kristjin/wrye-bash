@@ -1705,6 +1705,8 @@ class UIList(wx.Panel):
     itemMenu = None
     # UI settings keys
     keyPrefix = 'OVERRIDE'
+    #--gList image collection
+    icons = {} # TODO(ut): eliminate checkboxesIL and self.checkboxes in List subclasses
 
     def __init__(self, parent, style, dndFiles, dndList, dndColumns=()):
         wx.Panel.__init__(self, parent, style=wx.WANTS_CHARS)
@@ -1725,6 +1727,8 @@ class UIList(wx.Panel):
                               dndList=dndList, fnDndAllow=self.dndAllow,
                               fnDropFiles=self.OnDropFiles,
                               fnDropIndexes=self.OnDropIndexes)
+        if self.icons: self.gList.SetImageList(self.icons.GetImageList(),
+                                               wx.IMAGE_LIST_SMALL)
         # gList callbacks
         self.gList.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.DoColumnMenu)
         self.gList.Bind(wx.EVT_CONTEXT_MENU, self.DoItemMenu)
@@ -1839,24 +1843,21 @@ class Tank(UIList):
     """'Tank' format table. Takes the form of a wxListCtrl in Report mode, with
     multiple columns and (optionally) column and item menus."""
 
-    def __init__(self, parent, data, icons=None,
-                 details=None, style=(wx.LC_REPORT | wx.LC_SINGLE_SEL),
+    def __init__(self, parent, data, details=None, editLabels=False,
                  dndList=False, dndFiles=False, dndColumns=()):
         #--Data
-        if icons is None: icons = {}
         self.data = data
-        self.icons = icons #--Default to balt image collection.
         self.details = details
         #--Item/Id mapping
         self.nextItemId = 1
         self.item_itemId = {}
         self.itemId_item = {}
         #--ListCtrl
+        style = wx.LC_REPORT
+        if editLabels: style |= wx.LC_EDIT_LABELS
         UIList.__init__(self, parent, style=style, dndFiles=dndFiles,
                         dndList=dndList, dndColumns=dndColumns)
         gList = self.gList # created above
-        if self.icons:
-            gList.SetImageList(icons.GetImageList(),wx.IMAGE_LIST_SMALL)
         #--Columns
         self.UpdateColumns()
         #--Items

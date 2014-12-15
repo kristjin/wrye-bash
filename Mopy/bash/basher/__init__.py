@@ -2528,12 +2528,13 @@ class InstallersList(balt.Tank):
     keyPrefix = 'bash.installers'
     mainMenu = Links()
     itemMenu = Links()
+    icons = installercons
 
-    def __init__(self, parent, data, icons=None, details=None,
-                 style=(wx.LC_REPORT | wx.LC_SINGLE_SEL)):
+    def __init__(self, parent, data, details=None):
         self.colReverse = settings['bash.installers.colReverse']
-        balt.Tank.__init__(self,parent,data,icons,
-            details,style|wx.LC_EDIT_LABELS,dndList=True,dndFiles=True,dndColumns=['Order'])
+        balt.Tank.__init__(self, parent, data, details=details,
+                           editLabels=True, dndList=True, dndFiles=True,
+                           dndColumns=['Order'])
         self.gList.Bind(wx.EVT_CHAR, self.OnChar)
         self.gList.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.gList.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEditLabel)
@@ -2925,8 +2926,7 @@ class InstallersPanel(SashTankPanel):
         self.frameActivated = False
         self.fullRefresh = False
         #--Contents
-        self.gList = InstallersList(left, data, installercons, details=self,
-                                    style=wx.LC_REPORT)
+        self.gList = InstallersList(left, data, details=self)
         bosh.installersWindow = self.gList
         #--Package
         self.gPackage = roTextCtrl(right, noborder=True)
@@ -4123,6 +4123,7 @@ class PeopleList(balt.Tank):
     keyPrefix = 'bash.people'
     mainMenu = Links()
     itemMenu = Links()
+    icons = karmacons
 
     def __init__(self,*args,**kwdargs):
         self.colReverse = settings['bash.people.colReverse']
@@ -4157,8 +4158,7 @@ class PeoplePanel(SashTankPanel):
         SashTankPanel.__init__(self,data,parent)
         left,right = self.left,self.right
         #--Contents
-        self.gList = PeopleList(left, data, karmacons, details=self,
-                                style=wx.LC_REPORT)
+        self.gList = PeopleList(left, data, details=self)
         self.gName = roTextCtrl(right, multiline=False)
         self.gText = textCtrl(right, multiline=True)
         self.gKarma = spinCtrl(right,u'0',min=-5,max=5,onSpin=self.OnSpin)
