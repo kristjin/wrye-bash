@@ -1706,7 +1706,7 @@ class UIList(wx.Panel):
     # UI settings keys
     keyPrefix = 'OVERRIDE'
     #--gList image collection
-    icons = {} # TODO(ut): eliminate checkboxesIL and self.checkboxes in List subclasses
+    icons = {}
 
     def __init__(self, parent, style, dndFiles, dndList, dndColumns=()):
         wx.Panel.__init__(self, parent, style=wx.WANTS_CHARS)
