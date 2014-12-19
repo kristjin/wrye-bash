@@ -279,9 +279,13 @@ class List(balt.UIList):
     _sizeHints = (-1, 50) # overrides UIList
     icons = colorChecks
 
-    def __init__(self, parent, ctrlStyle=wx.LC_REPORT | wx.LC_SINGLE_SEL,
-                 dndFiles=False, dndList=False, dndColumns=()):
+    def __init__(self, parent, dndFiles=False, dndList=False, dndColumns=(),
+                 singleCell=False, editLabels=False, sunkenBorder=True):
         #--ListCtrl
+        ctrlStyle = wx.LC_REPORT
+        if singleCell: ctrlStyle |= wx.LC_SINGLE_SEL
+        if editLabels: ctrlStyle |= wx.LC_EDIT_LABELS
+        if sunkenBorder: ctrlStyle |= wx.SUNKEN_BORDER
         balt.UIList.__init__(self, parent, style=ctrlStyle, dndFiles=dndFiles,
                              dndList=dndList, dndColumns=dndColumns)
         self.list = self.gList # self.list must go
@@ -510,7 +514,8 @@ class MasterList(List):
         self.esmsFirst = settings['bash.masters.esmsFirst']
         self.selectedFirst = settings['bash.masters.selectedFirst']
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_EDIT_LABELS))
+        List.__init__(self, parent, singleCell=True, editLabels=True,
+                      sunkenBorder=False)
         self.gList.Bind(wx.EVT_LIST_END_LABEL_EDIT,self.OnLabelEdited)
         self._setEditedFn = setEditedFn
 
@@ -750,7 +755,7 @@ class INIList(List):
         #--Data/Items
         self.data = bosh.iniInfos
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=wx.LC_REPORT)
+        List.__init__(self, parent, sunkenBorder=False)
         #--Events
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
@@ -1039,7 +1044,8 @@ class ModList(List):
         checkboxesIL = self.icons.GetImageList()
         self.sm_up = checkboxesIL.Add(balt.SmallUpArrow.GetBitmap())
         self.sm_dn = checkboxesIL.Add(balt.SmallDnArrow.GetBitmap())
-        List.__init__(self,parent,ctrlStyle=wx.LC_REPORT, dndList=True, dndColumns=['Load Order'])#|wx.SUNKEN_BORDER))
+        List.__init__(self, parent, sunkenBorder=False, dndList=True,
+                      dndColumns=['Load Order'])  # |wx.SUNKEN_BORDER))
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -2083,7 +2089,7 @@ class SaveList(List):
         self.data = data = bosh.saveInfos
         self.details = None #--Set by panel
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
+        List.__init__(self, parent, editLabels=True)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -3427,7 +3433,7 @@ class ScreensList(List):
         #--Data/Items
         self.data = bosh.screensData = bosh.ScreensData()
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_EDIT_LABELS))
+        List.__init__(self, parent, editLabels=True)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -3637,7 +3643,7 @@ class BSAList(List):
         self.data = data = bosh.BSAInfos
         self.details = None #--Set by panel
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
+        List.__init__(self, parent)
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         #--ScrollPos
@@ -3928,7 +3934,7 @@ class MessageList(List):
         self.gText = None
         self.searchResults = None
         #--Parent init
-        List.__init__(self,parent,ctrlStyle=(wx.LC_REPORT|wx.SUNKEN_BORDER))
+        List.__init__(self, parent)
         #--Events
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
