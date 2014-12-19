@@ -280,14 +280,10 @@ class List(balt.UIList):
     icons = colorChecks
 
     def __init__(self, parent, dndFiles=False, dndList=False, dndColumns=(),
-                 singleCell=False, editLabels=False, sunkenBorder=True):
+                 **kwargs):
         #--ListCtrl
-        ctrlStyle = wx.LC_REPORT
-        if singleCell: ctrlStyle |= wx.LC_SINGLE_SEL
-        if editLabels: ctrlStyle |= wx.LC_EDIT_LABELS
-        if sunkenBorder: ctrlStyle |= wx.SUNKEN_BORDER
-        balt.UIList.__init__(self, parent, style=ctrlStyle, dndFiles=dndFiles,
-                             dndList=dndList, dndColumns=dndColumns)
+        balt.UIList.__init__(self, parent, dndFiles=dndFiles, dndList=dndList,
+                             dndColumns=dndColumns, **kwargs)
         self.list = self.gList # self.list must go
         self.vScrollPos = 0
         #--Columns
@@ -1044,8 +1040,8 @@ class ModList(List):
         checkboxesIL = self.icons.GetImageList()
         self.sm_up = checkboxesIL.Add(balt.SmallUpArrow.GetBitmap())
         self.sm_dn = checkboxesIL.Add(balt.SmallDnArrow.GetBitmap())
-        List.__init__(self, parent, sunkenBorder=False, dndList=True,
-                      dndColumns=['Load Order'])  # |wx.SUNKEN_BORDER))
+        List.__init__(self, parent, dndList=True, dndColumns=['Load Order'],
+                      sunkenBorder=False)  # |wx.SUNKEN_BORDER))
         #--Events
         self.list.Bind(wx.EVT_CHAR, self.OnChar)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
