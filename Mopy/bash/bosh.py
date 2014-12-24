@@ -4206,6 +4206,7 @@ class INIInfos(FileInfos):
     def getBashDir(self):
         """Return directory to save info."""
         return dirs['modsBash'].join(u'INI Data')
+        # TODO(ut): makedirs ?
 
 #------------------------------------------------------------------------------
 class ModInfos(FileInfos):
@@ -5567,7 +5568,7 @@ class PickleTankData:
         """Initialize. Definite data from pickledict."""
         self.dictFile = PickleDict(path)
         self.data = self.dictFile.data
-        self.hasChanged = False
+        self.hasChanged = False # TODO(ut): move to bolt.PickleDict
         self.loaded = False
 
     def setChanged(self,hasChanged=True):
