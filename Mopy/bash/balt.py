@@ -1755,6 +1755,11 @@ class UIList(wx.Panel):
         # Panel callbacks
         self.Bind(wx.EVT_SIZE,self.OnSize)
 
+    colReverse = property( # not sure why it gets it changed but no harm either
+        lambda self: bosh.settings.getChanged(
+            self.__class__.keyPrefix + '.colReverse'),
+        doc='Dictionary column->isReversed')
+
     #--Column Menu
     def DoColumnMenu(self, event, column=None):
         """Show column menu."""
@@ -1874,6 +1879,10 @@ class Tank(UIList):
         data.setParam('vScrollPos', gList.GetScrollPos(wx.VERTICAL))
         #--Hack: Default text item background color
         self.defaultTextBackground = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+
+    colReverse = property(
+        lambda self: bosh.settings[self.__class__.keyPrefix + '.colReverse'],
+        doc='Dictionary column->isReversed')
 
     #--Drag and Drop-----------------------------------------------------------
     def OnDropIndexes(self, indexes, newPos):
@@ -2001,6 +2010,12 @@ class Tank(UIList):
         self.UpdateIds()
         self.SortItems()
 
+    def _setSort(self,sort):
+        self.sort = bosh.settings[self.__class__.keyPrefix + '.sort'] = sort
+
+    def _setColumnReverse(self, column, reverse):
+        self.colReverse[column] = reverse # should mark as changed on get ?
+        bosh.settings.setChanged(self.__class__.keyPrefix + '.colReverse')
     def SortItems(self,column=None,reverse='CURRENT'):
         """Sort items. Real work is done by data object, and that completed
         sort is then "cloned" list through an intermediate cmp function.
@@ -2025,18 +2040,13 @@ class Tank(UIList):
             reverse = not curReverse
         elif reverse in ('INVERT','CURRENT'):
             reverse = curReverse
-        self.SetColumnReverse(column, reverse)
-        self.SetSort(column)
+        self._setColumnReverse(column, reverse)
+        self._setSort(column)
         #--Sort
         items = self.data.getSorted(column,reverse)
         sortDict = dict((self.item_itemId[y],x) for x,y in enumerate(items))
         self.gList.SortItems(lambda x,y: cmp(sortDict[x],sortDict[y]))
         #--Done
-
-    def SetColumnReverse(self,column,reverse):
-        pass
-    def SetSort(self,sort):
-        pass
 
     def RefreshData(self):
         """Refreshes underlying data."""

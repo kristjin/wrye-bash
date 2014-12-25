@@ -513,7 +513,6 @@ class MasterList(List):
     def __init__(self, parent, fileInfo, setEditedFn, listData=None):
         #--Columns
         self.cols = settings['bash.masters.cols']
-        self.colReverse = settings['bash.masters.colReverse'].copy()
         #--Data/Items
         self.edited = False
         self.fileInfo = fileInfo
@@ -528,6 +527,9 @@ class MasterList(List):
                       editLabels=True, sunkenBorder=False)
         self.gList.Bind(wx.EVT_LIST_END_LABEL_EDIT,self.OnLabelEdited)
         self._setEditedFn = setEditedFn
+
+    colReverse = property(lambda self: {},
+                          doc='Do not reverse columns in Master Lists')
 
     def OnItemSelected(self, event): event.Skip()
 
@@ -760,7 +762,6 @@ class INIList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.colsKey = 'bash.ini.cols'
-        self.colReverse = settings.getChanged('bash.ini.colReverse')
         self.sortValid = settings['bash.ini.sortValid']
         #--Parent init
         List.__init__(self, parent, listData, sunkenBorder=False)
@@ -1040,7 +1041,6 @@ class ModList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.colsKey = 'bash.mods.cols'
-        self.colReverse = settings.getChanged('bash.mods.colReverse')
         #--Data/Items
         self.details = None #--Set by panel
         self.esmsFirst = settings['bash.mods.esmsFirst']
@@ -2087,7 +2087,6 @@ class SaveList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.colsKey = 'bash.saves.cols'
-        self.colReverse = settings.getChanged('bash.saves.colReverse')
         #--Data/Items
         self.details = None #--Set by panel
         #--Parent init
@@ -2513,7 +2512,6 @@ class InstallersList(balt.Tank):
     icons = installercons
 
     def __init__(self, parent, data, details=None):
-        self.colReverse = settings['bash.installers.colReverse']
         balt.Tank.__init__(self, parent, data, details=details,
                            editLabels=True, dndList=True, dndFiles=True,
                            dndColumns=['Order'])
@@ -2526,13 +2524,6 @@ class InstallersList(balt.Tank):
 
     @property
     def cols(self): return settings['bash.installers.cols']
-
-    def SetSort(self,sort):
-        self.sort = settings['bash.installers.sort'] = sort
-
-    def SetColumnReverse(self,column,reverse):
-        settings['bash.installers.colReverse'][column] = reverse
-        settings.setChanged('bash.installers.colReverse')
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.installers.cols'].index(column)
@@ -3425,7 +3416,6 @@ class ScreensList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.colsKey = 'bash.screens.cols'
-        self.colReverse = settings.getChanged('bash.screens.colReverse')
         #--Parent init
         List.__init__(self, parent, listData, editLabels=True)
         #--Events
@@ -3633,7 +3623,6 @@ class BSAList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.cols = settings['bash.BSAs.cols']
-        self.colReverse = settings.getChanged('bash.BSAs.colReverse')
         #--Data/Items
         self.details = None #--Set by panel
         #--Parent init
@@ -3916,7 +3905,6 @@ class MessageList(List):
     def __init__(self, parent, listData):
         #--Columns
         self.colsKey = 'bash.messages.cols'
-        self.colReverse = settings.getChanged('bash.messages.colReverse')
         #--Other
         self.gText = None
         self.searchResults = None
@@ -4100,19 +4088,8 @@ class PeopleList(balt.Tank):
     itemMenu = Links()
     icons = karmacons
 
-    def __init__(self,*args,**kwdargs):
-        self.colReverse = settings['bash.people.colReverse']
-        balt.Tank.__init__(self, *args, **kwdargs)
-
     @property
     def cols(self): return settings['bash.people.cols']
-
-    def SetSort(self,sort):
-        self.sort = settings['bash.people.sort'] = sort
-
-    def SetColumnReverse(self,column,reverse):
-        settings['bash.people.colReverse'][column] = reverse
-        settings.setChanged('bash.people.colReverse')
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.people.cols'].index(column)
