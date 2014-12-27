@@ -71,7 +71,7 @@ from ..balt import colors, images, Image
 from ..balt import Links, ItemLink
 from ..balt import wxListAligns, splitterStyle
 
-# Constants --------------------------------------------------------------------
+# Constants -------------------------------------------------------------------
 from .constants import colorInfo, tabInfo, settingDefaults, karmacons, \
     installercons, PNG, JPEG, ICO, BMP, TIF, ID_TAGS
 
@@ -107,7 +107,7 @@ gPeople = None # New global - yak
 # Settings --------------------------------------------------------------------
 settings = None
 
-# Links -----------------------------------------------------------------
+# Links -----------------------------------------------------------------------
 #------------------------------------------------------------------------------
 def SetUAC(item):
     """Helper function for creating menu items or buttons that need UAC
@@ -135,6 +135,7 @@ class People_Link(ItemLink):
 
     @property
     def pdata(self): return gPeople.data # PeopleData singleton
+
 # Exceptions ------------------------------------------------------------------
 class BashError(BoltError): pass
 
@@ -204,7 +205,7 @@ class NotebookPanel(wx.Panel):
         """Called to signal that UI color settings have changed."""
         pass
 
-    def SetStatusCount(self):
+    def SetStatusCount(self): # TODO(ut) overrides eliminate
         """Sets status bar count field."""
         statusBar.SetStatusText(u'',2)
 
@@ -263,6 +264,7 @@ class SashPanel(NotebookPanel):
             settings[self.sashPosKey] = splitter.GetSashPosition()
         super(SashPanel, self).OnCloseWindow()
 
+#------------------------------------------------------------------------------
 class SashTankPanel(SashPanel):
     def __init__(self,data,parent):
         sashPos = data.getParam('sashPos',200)
@@ -2522,9 +2524,6 @@ class InstallersList(balt.Tank):
         self.hitItem = None
         self.hitTime = 0
 
-    @property
-    def cols(self): return settings['bash.installers.cols']
-
     def GetColumnDex(self,column):
         return settingDefaults['bash.installers.cols'].index(column)
 
@@ -4087,9 +4086,6 @@ class PeopleList(balt.Tank):
     mainMenu = Links()
     itemMenu = Links()
     icons = karmacons
-
-    @property
-    def cols(self): return settings['bash.people.cols']
 
     def GetColumnDex(self,column):
         return settingDefaults['bash.people.cols'].index(column)

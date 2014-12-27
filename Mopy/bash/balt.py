@@ -1705,7 +1705,7 @@ class UIList(wx.Panel):
     # optional menus
     mainMenu = None
     itemMenu = None
-    # UI settings keys
+    # UI settings keys - cf tankKey in TankData ...
     keyPrefix = 'OVERRIDE'
     #--gList image collection
     icons = {}
@@ -1856,6 +1856,11 @@ class Tank(UIList):
 
     def __init__(self, parent, data, details=None, dndList=False,
                  dndFiles=False, dndColumns=(), **kwargs):
+        """
+        :param parent:
+        :param data:
+        :param details:
+        """
         #--Data
         self.data = data
         self.details = details
@@ -1880,7 +1885,10 @@ class Tank(UIList):
         #--Hack: Default text item background color
         self.defaultTextBackground = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 
-    colReverse = property(
+    @property
+    def cols(self): return bosh.settings[self.__class__.keyPrefix + '.cols']
+
+    colReverse = property( # @property ?
         lambda self: bosh.settings[self.__class__.keyPrefix + '.colReverse'],
         doc='Dictionary column->isReversed')
 
@@ -2016,20 +2024,20 @@ class Tank(UIList):
     def _setColumnReverse(self, column, reverse):
         self.colReverse[column] = reverse # should mark as changed on get ?
         bosh.settings.setChanged(self.__class__.keyPrefix + '.colReverse')
+
     def SortItems(self,column=None,reverse='CURRENT'):
         """Sort items. Real work is done by data object, and that completed
         sort is then "cloned" list through an intermediate cmp function.
 
-        column: column to sort. Defaults to current sort column.
+        :param column: column to sort. Defaults to current sort column.
 
-        reverse:
+        :param reverse:
         * True: Reverse order
         * False: Normal order
         * 'CURRENT': Same as current order for column.
         * 'INVERT': Invert if column is same as current sort column.
         """
         #--Parse column and reverse arguments.
-        data = self.data
         if self.sortDirty:
             self.sortDirty = False
             (column, reverse) = (None,'CURRENT')
@@ -2117,7 +2125,7 @@ class Tank(UIList):
         else:
             event.Skip()
         self.colWidths[colName] = width
-        bosh.settings.setChanged(self.colWidthsKey) # TODO(ut): needed ? was being called by People and Installers overrides
+        bosh.settings.setChanged(self.colWidthsKey)
 
     def OnColumnClick(self, event):
         """Column header was left clicked on. Sort on that column."""
